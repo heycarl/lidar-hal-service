@@ -1,8 +1,10 @@
 import argparse
 import asyncio
-import uvicorn
 import logging
 import sys
+
+import uvicorn
+
 from src.core.manager import LidarManager
 from src.transports.rest_api import create_app
 from src.utils.config_loader import load_app_config

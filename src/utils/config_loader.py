@@ -1,5 +1,7 @@
-import yaml
 import logging
+
+import yaml
+
 from src.core.models import AppConfig
 
 logger = logging.getLogger(__name__)

@@ -1,11 +1,12 @@
 import logging
 import threading
 import time
-from typing import Callable, List, Optional, Any
+from typing import Any, Callable, List, Optional
 
-from pyrplidar import PyRPlidar, PyRPlidarProtocolError, PyRPlidarConnectionError
-from .base import BaseLidar, LidarStatus
+from pyrplidar import PyRPlidar, PyRPlidarConnectionError, PyRPlidarProtocolError
+
 from ..core.models import LidarConfig
+from .base import BaseLidar, LidarStatus
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +44,7 @@ class PyRPlidarImpl(BaseLidar):
         logger.info(f"Connecting to LiDAR on {self._port} (Baud: {self._baudrate})...")
         self._status = LidarStatus.CONNECTING
         try:
-            self._lidar.connect(
-                port=self._port, baudrate=self._baudrate, timeout=self._timeout
-            )
+            self._lidar.connect(port=self._port, baudrate=self._baudrate, timeout=self._timeout)
 
             # Get device information for logging purposes
             info = self._lidar.get_info()

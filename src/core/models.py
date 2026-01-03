@@ -1,5 +1,6 @@
 import time
-from typing import List, Literal, Any, Union, Dict
+from typing import Any, Dict, List, Literal, Union
+
 from pydantic import BaseModel, Field
 
 
@@ -46,6 +47,7 @@ class WSMessage(BaseModel):
     Standard envelope for all WebSocket communications.
     The 'type' field acts as a header for message routing.
     """
+
     type: Literal["lidar_scan", "system_status", "error"] = Field(
         ..., description="Type of the message payload"
     )
@@ -59,8 +61,8 @@ class WSMessage(BaseModel):
                 "type": "lidar_scan",
                 "data": {
                     "timestamp": 1704123456.789,
-                    "points": [{"angle": 0.0, "distance": 150.5, "intensity": 45}]
-                }
+                    "points": [{"angle": 0.0, "distance": 150.5, "intensity": 45}],
+                },
             }
         }
     }

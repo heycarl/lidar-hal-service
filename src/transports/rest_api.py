@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException, Body, WebSocket, WebSocketDisconnect, status
-from typing import Dict, Any
 import logging
+from typing import Any, Dict
 
-from src.core.models import WSMessage, LidarConfig, LidarScan
+from fastapi import Body, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
+
 from src.core.manager import LidarManager
+from src.core.models import LidarConfig, LidarScan, WSMessage
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +29,16 @@ def create_app(manager: LidarManager) -> FastAPI:
         "/status",
         tags=["System"],
         summary="Get system state",
-        response_description="Returns current hardware status, active configuration, and subscriber count.",
+        response_description="Returns current hardware status, active configuration, "
+        "and subscriber count.",
     )
     async def get_status() -> Dict[str, Any]:
         """
         Retrieves the current operational state of the LiDAR.
         - **status**: Current state (disconnected, ready, scanning, error).
         - **config**: The active hardware parameters (PWM, port, etc.).
-        - **active_subscribers**: Number of clients currently connected via WebSocket or other transports.
+        - **active_subscribers**: Number of clients currently connected
+        via WebSocket or other transports.
         """
         return {
             "status": manager.status,
@@ -94,7 +97,7 @@ def create_app(manager: LidarManager) -> FastAPI:
                     "motor_pwm": 660,
                 }
             ],
-        )
+        ),
     ):
         """
         Updates the motor PWM and communication settings.
@@ -120,12 +123,8 @@ def create_app(manager: LidarManager) -> FastAPI:
         summary="Get the most recent LiDAR scan",
         response_model=LidarScan,
         responses={
-            200: {
-                "description": "Successfully retrieved the last completed 360° scan."
-            },
-            404: {
-                "description": "No scan data available (device might be warming up or stopped)."
-            },
+            200: {"description": "Successfully retrieved the last completed 360° scan."},
+            404: {"description": "No scan data available (device might be warming up or stopped)."},
         },
     )
     async def get_latest_scan():

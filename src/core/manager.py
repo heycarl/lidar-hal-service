@@ -1,9 +1,10 @@
 import asyncio
 import logging
-from typing import Set, List, Any, Optional
+from typing import Any, List, Optional, Set
 
-from .models import LidarScan, LidarPoint, LidarConfig
 from src.hardware.pyrplidar_impl import PyRPlidarImpl
+
+from .models import LidarConfig, LidarPoint, LidarScan
 
 logger = logging.getLogger(__name__)
 
