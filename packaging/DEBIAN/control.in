@@ -4,4 +4,5 @@ Section: misc
 Priority: optional
 Architecture: arm64
 Maintainer: @MAINTAINER@
+Depends: python3 (>= 3.12)
 Description: @DESCRIPTION@

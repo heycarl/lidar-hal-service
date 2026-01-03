@@ -1,69 +1,65 @@
-name: Build ARM64 deb
+name: Build ARM64 offline deb
 
 on:
   push:
   workflow_dispatch:
-#    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-24.04-arm64
+
+    env:
+      PKG_NAME: lidar-service
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install build deps
+      - name: Install build dependencies
         run: |
           sudo apt update
-          sudo apt install -y dpkg-dev
+          sudo apt install -y dpkg-dev python3.12-venv python3.12-distutils build-essential
 
-      - name: Read metadata from pyproject.toml
+      - name: Extract metadata from pyproject.toml
         id: meta
         run: |
           python - << 'EOF'
-          import tomllib
-
-          with open("pyproject.toml", "rb") as f:
-              p = tomllib.load(f)["project"]
-
-          name = p["name"]
-          version = p["version"]
-          desc = p.get("description", "")
+          import tomllib, os
+          p = tomllib.load(open("pyproject.toml","rb"))["project"]
+          os.environ["VERSION"] = p["version"]
+          os.environ["DESCRIPTION"] = p.get("description","")
           author = p["authors"][0]
-          maintainer = f'{author["name"]} <{author["email"]}>'
-
-          print(f"NAME={name}")
-          print(f"VERSION={version}")
-          print(f"DESCRIPTION={desc}")
-          print(f"MAINTAINER={maintainer}")
-
-          with open("meta.env", "w") as f:
-              f.write(f"NAME={name}\n")
-              f.write(f"VERSION={version}\n")
-              f.write(f"DESCRIPTION={desc}\n")
-              f.write(f"MAINTAINER={maintainer}\n")
+          os.environ["MAINTAINER"] = f'{author["name"]} <{author["email"]}>'
+          print(f'Version: {os.environ["VERSION"]}')
           EOF
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "DESCRIPTION=${DESCRIPTION}" >> $GITHUB_ENV
+          echo "MAINTAINER=${MAINTAINER}" >> $GITHUB_ENV
 
-          cat meta.env >> $GITHUB_ENV
+      - name: Build wheel packages
+        run: |
+          python3 -m pip install --upgrade pip wheel
+          python3 -m pip wheel . -w packaging/wheels
 
       - name: Prepare package layout
         run: |
-          mkdir -p pkg/opt/${NAME}/{app,config,bin,venv}
+          mkdir -p pkg/opt/${PKG_NAME}/{app,config,wheels,bin}
           mkdir -p pkg/lib/systemd/system
           mkdir -p pkg/DEBIAN
 
-          cp -r src pkg/opt/${NAME}/app/
-          cp config.yaml pkg/opt/${NAME}/config/
-          cp packaging/bin/${NAME} pkg/opt/${NAME}/bin/
-          cp packaging/systemd/${NAME}.service pkg/lib/systemd/system/
+          cp -r src pkg/opt/${PKG_NAME}/app/
+          cp config.yaml pkg/opt/${PKG_NAME}/config/
+          cp -r packaging/wheels/* pkg/opt/${PKG_NAME}/wheels/
+          cp packaging/bin/${PKG_NAME} pkg/opt/${PKG_NAME}/bin/
+          cp packaging/systemd/${PKG_NAME}.service pkg/lib/systemd/system/
 
           sed \
-            -e "s/@NAME@/${NAME}/" \
+            -e "s/@NAME@/${PKG_NAME}/" \
             -e "s/@VERSION@/${VERSION}/" \
             -e "s/@DESCRIPTION@/${DESCRIPTION}/" \
             -e "s/@MAINTAINER@/${MAINTAINER}/" \
@@ -72,28 +68,11 @@ jobs:
           cp packaging/DEBIAN/postinst pkg/DEBIAN/
           chmod 755 pkg/DEBIAN/postinst
 
-      - name: Build portable venv
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install -U pip wheel
-          pip install .
-          deactivate
-
-          TARGET="/opt/${PKG_NAME}/venv/bin/python"
-          sed -i "1s|.*|#!${TARGET}|" venv/bin/python
-          sed -i "1s|.*|#!${TARGET}|" venv/bin/pip
-          sed -i "1s|.*|#!${TARGET}|" venv/bin/pip3
-          
-          mkdir -p pkg/opt/lidar-service/venv
-          cp -r venv/* pkg/opt/lidar-service/venv/
-
       - name: Build deb package
-        run: |
-          dpkg-deb --build pkg ${NAME}_${VERSION}_arm64.deb
+        run: dpkg-deb --build pkg ${PKG_NAME}_${VERSION}_arm64.deb
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: lidar-service-deb
+          name: ${PKG_NAME}-deb
           path: "*.deb"
