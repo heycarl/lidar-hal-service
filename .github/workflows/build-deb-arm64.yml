@@ -13,11 +13,11 @@ env:
   PKG_NAME: lidar-service
 
 jobs:
-  lint-and-format:
+  ci:
     uses: ./.github/workflows/ci.yml
 
   build:
-    needs: lint-and-format
+    needs: ci
     strategy:
       fail-fast: false
       matrix:

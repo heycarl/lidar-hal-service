@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/checkout@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
@@ -24,8 +24,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff black
 
-      - name: Check formatting with Black
-        run: black --check src
-
-      - name: Lint with Ruff
-        run: ruff check src
+      - name: Run CI via make
+        run: make ci
