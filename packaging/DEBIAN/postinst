@@ -1,15 +1,21 @@
 #!/bin/sh
 set -e
 
+PYTHON=$(command -v python3)
+if [ -z "$PYTHON" ]; then
+    echo "Python3 not found"
+    exit 1
+fi
+
 mkdir -p /etc/lidar-service
 if [ ! -f /etc/lidar-service/config.yaml ]; then
   cp /opt/lidar-service/config/config.yaml /etc/lidar-service/config.yaml
 fi
 
 if [ ! -d /opt/lidar-service/venv ]; then
-  python3 -m venv /opt/lidar-service/venv
+  $PYTHON -m venv /opt/lidar-service/venv
   /opt/lidar-service/venv/bin/pip install --upgrade pip
-  /opt/lidar-service/venv/bin/pip install --no-index --find-links=/opt/lidar-service/wheels /opt/lidar-service/app
+  /opt/lidar-service/venv/bin/pip install --no-index --find-links=/opt/lidar-service/wheels lidar_service-*.whl
 fi
 
 systemctl daemon-reexec
