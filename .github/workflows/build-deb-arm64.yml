@@ -72,15 +72,18 @@ jobs:
           cp packaging/DEBIAN/postinst pkg/DEBIAN/
           chmod 755 pkg/DEBIAN/postinst
 
-      - name: Build venv
+      - name: Build portable venv
         run: |
-          python -m venv venv
+          python3 -m venv venv
           source venv/bin/activate
-          pip install -U pip
+          pip install -U pip wheel
           pip install .
           deactivate
 
-          cp -r venv pkg/opt/${NAME}/
+          TARGET="/opt/${PKG_NAME}/venv/bin/python"
+          sed -i "1s|.*|#!${TARGET}|" venv/bin/python
+          sed -i "1s|.*|#!${TARGET}|" venv/bin/pip
+          sed -i "1s|.*|#!${TARGET}|" venv/bin/pip3
 
       - name: Build deb package
         run: |
