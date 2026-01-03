@@ -1,0 +1,9 @@
+lidar:
+  - type: rpilidar-c1
+    port: "/dev/cu.usbserial-1420"
+    baudrate: 460800
+    timeout: 3
+    motor_pwm: 400
+
+network:
+  rest_port: 8000

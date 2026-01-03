@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lidar-service"
+version = "1.0.0"
+requires-python = ">=3.12"
+description = "LIDAR middleware Service with REST and WebSocket API"
+authors = [
+    {name = "Alexandr Efimchik", email = "efimchiksasha@gmail.com"}
+]
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.10.0",
+    "pyrplidar>=0.1.2",
+    "pyserial>=3.5",
+    "PyYAML>=6.0.2",
+    "anyio>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+lidar-service = "src.main:run_app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
