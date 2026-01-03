@@ -1,4 +1,4 @@
-name: Build ARM64 offline deb
+name: Build deb package
 
 on:
   push:
@@ -6,15 +6,26 @@ on:
       - 'v*.*.*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+env:
+  PKG_NAME: lidar-service
+
 jobs:
   build:
-    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm
+            deb_arch: arm64
+          - arch: amd64
+            runs-on: ubuntu-24.04
+            deb_arch: amd64
 
-    env:
-      PKG_NAME: lidar-service
-
-    permissions:
-      contents: write
+    runs-on: ${{ matrix.runs-on }}
 
     steps:
       - uses: actions/checkout@v4
@@ -81,16 +92,28 @@ jobs:
           chmod 755 pkg/DEBIAN/postinst
 
       - name: Build deb package
-        run: dpkg-deb --build pkg ${PKG_NAME}_${VERSION}_arm64.deb
+        run: |
+          dpkg-deb --build pkg \
+            ${PKG_NAME}_${VERSION}_${{ matrix.deb_arch }}.deb
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PKG_NAME }}-deb
+          name: ${{ env.PKG_NAME }}-${{ matrix.deb_arch }}-deb
           path: "*.deb"
 
-      - name: Upload artifacts
-        id: upload-release-asset
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: "*.deb"
+          files: artifacts/**/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
