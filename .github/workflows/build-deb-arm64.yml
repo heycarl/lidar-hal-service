@@ -1,0 +1,87 @@
+name: Build ARM64 offline deb
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+
+    env:
+      PKG_NAME: lidar-service
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from Git tag
+        id: version
+        run: |
+          TAG_NAME=${GITHUB_REF_NAME}
+          
+          VERSION=${TAG_NAME#v}
+          
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Using version: $VERSION"
+
+      - name: Patch pyproject.toml locally
+        run: |
+          sed -i "s/^version\s*=.*/version = \"$VERSION\"/" pyproject.toml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y dpkg-dev python3.12-venv python3.12-dev build-essential
+
+      - name: Extract metadata from pyproject.toml
+        run: |
+          DESCRIPTION=$(grep -Po '^description\s*=\s*"\K[^"]+' pyproject.toml || echo "")
+          MAINTAINER=$(grep -Po '^name\s*=\s*"\K[^"]+' pyproject.toml | head -1)
+          EMAIL=$(grep -Po '^email\s*=\s*"\K[^"]+' pyproject.toml | head -1)
+          MAINTAINER_FULL="${MAINTAINER} <${EMAIL}>"
+          echo "DESCRIPTION=$DESCRIPTION" >> $GITHUB_ENV
+          echo "MAINTAINER=$MAINTAINER_FULL" >> $GITHUB_ENV
+
+      - name: Build wheel packages
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip wheel . -w packaging/wheels
+
+      - name: Prepare package layout
+        run: |
+          mkdir -p pkg/opt/${PKG_NAME}/{app,config,wheels,bin}
+          mkdir -p pkg/lib/systemd/system
+          mkdir -p pkg/DEBIAN
+
+          cp -r src pkg/opt/${PKG_NAME}/app/
+          cp config.yaml pkg/opt/${PKG_NAME}/config/
+          cp -r packaging/wheels/* pkg/opt/${PKG_NAME}/wheels/
+          cp packaging/bin/${PKG_NAME} pkg/opt/${PKG_NAME}/bin/
+          cp packaging/systemd/${PKG_NAME}.service pkg/lib/systemd/system/
+
+          sed \
+            -e "s/@NAME@/${PKG_NAME}/" \
+            -e "s/@VERSION@/${VERSION}/" \
+            -e "s/@DESCRIPTION@/${DESCRIPTION}/" \
+            -e "s/@MAINTAINER@/${MAINTAINER}/" \
+            packaging/DEBIAN/control.in > pkg/DEBIAN/control
+
+          cp packaging/DEBIAN/postinst pkg/DEBIAN/
+          chmod 755 pkg/DEBIAN/postinst
+
+      - name: Build deb package
+        run: dpkg-deb --build pkg ${PKG_NAME}_${VERSION}_arm64.deb
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PKG_NAME }}-deb
+          path: "*.deb"

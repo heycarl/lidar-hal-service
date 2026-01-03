@@ -1,0 +1,13 @@
+[Unit]
+Description=LiDAR Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/lidar-service/bin/lidar-service
+Restart=always
+RestartSec=2
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
