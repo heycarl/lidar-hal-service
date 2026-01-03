@@ -69,5 +69,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${PKG_NAME}-deb
+          name: ${{ env.PKG_NAME }}-deb
           path: "*.deb"
