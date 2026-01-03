@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /opt/lidar-service/venv/bin/python /opt/lidar-service/app/src/main.py
