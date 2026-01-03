@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+systemctl stop lidar-service || true
+systemctl disable lidar-service || true
+
+rm -rf /opt/lidar-service
+
+systemctl daemon-reload
