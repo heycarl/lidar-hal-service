@@ -85,3 +85,9 @@ jobs:
         with:
           name: ${{ env.PKG_NAME }}-deb
           path: "*.deb"
+
+      - name: Upload artifacts
+        id: upload-release-asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "*.deb"
