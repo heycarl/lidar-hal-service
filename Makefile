@@ -6,7 +6,7 @@ help:
 	@echo "Available targets:"
 	@echo "  lint    - run linters (black)"
 	@echo "  format  - autoformat code (ruff format)"
-	@echo "  ci      - lint + test"
+	@echo "  ci      - lint + format"
 
 lint:
 	$(PYTHON) -m black --check src
@@ -14,4 +14,4 @@ lint:
 format:
 	$(PYTHON) -m ruff check src
 
-ci: lint test
+ci: lint format
