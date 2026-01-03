@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+mkdir -p /etc/lidar-service
+
+if [ ! -f /etc/lidar-service/config.yaml ]; then
+  cp /opt/lidar-service/config/config.yaml /etc/lidar-service/config.yaml
+fi
+
+systemctl daemon-reexec
+systemctl daemon-reload
+systemctl enable lidar-service
+systemctl restart lidar-service

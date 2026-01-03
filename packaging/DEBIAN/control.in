@@ -1,0 +1,7 @@
+Package: @NAME@
+Version: @VERSION@
+Section: misc
+Priority: optional
+Architecture: arm64
+Maintainer: @MAINTAINER@
+Description: @DESCRIPTION@

@@ -1,0 +1,93 @@
+name: Build ARM64 deb
+
+on:
+  push:
+  workflow_dispatch:
+#    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build deps
+        run: |
+          sudo apt update
+          sudo apt install -y dpkg-dev
+
+      - name: Read metadata from pyproject.toml
+        id: meta
+        run: |
+          python - << 'EOF'
+          import tomllib
+
+          with open("pyproject.toml", "rb") as f:
+              p = tomllib.load(f)["project"]
+
+          name = p["name"]
+          version = p["version"]
+          desc = p.get("description", "")
+          author = p["authors"][0]
+          maintainer = f'{author["name"]} <{author["email"]}>'
+
+          print(f"NAME={name}")
+          print(f"VERSION={version}")
+          print(f"DESCRIPTION={desc}")
+          print(f"MAINTAINER={maintainer}")
+
+          with open("meta.env", "w") as f:
+              f.write(f"NAME={name}\n")
+              f.write(f"VERSION={version}\n")
+              f.write(f"DESCRIPTION={desc}\n")
+              f.write(f"MAINTAINER={maintainer}\n")
+          EOF
+
+          cat meta.env >> $GITHUB_ENV
+
+      - name: Prepare package layout
+        run: |
+          mkdir -p pkg/opt/${NAME}/{app,config,bin,venv}
+          mkdir -p pkg/lib/systemd/system
+          mkdir -p pkg/DEBIAN
+
+          cp -r src pkg/opt/${NAME}/app/
+          cp config.yaml pkg/opt/${NAME}/config/
+          cp packaging/bin/${NAME} pkg/opt/${NAME}/bin/
+          cp packaging/systemd/${NAME}.service pkg/lib/systemd/system/
+
+          sed \
+            -e "s/@NAME@/${NAME}/" \
+            -e "s/@VERSION@/${VERSION}/" \
+            -e "s/@DESCRIPTION@/${DESCRIPTION}/" \
+            -e "s/@MAINTAINER@/${MAINTAINER}/" \
+            packaging/DEBIAN/control.in > pkg/DEBIAN/control
+
+          cp packaging/DEBIAN/postinst pkg/DEBIAN/
+          chmod 755 pkg/DEBIAN/postinst
+
+      - name: Build venv
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -U pip
+          pip install .
+          deactivate
+
+          cp -r venv pkg/opt/${NAME}/
+
+      - name: Build deb package
+        run: |
+          dpkg-deb --build pkg ${NAME}_${VERSION}_arm64.deb
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lidar-service-deb
+          path: "*.deb"
