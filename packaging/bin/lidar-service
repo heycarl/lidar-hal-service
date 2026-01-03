@@ -1,2 +1,4 @@
 #!/bin/sh
-exec /opt/lidar-service/venv/bin/python /opt/lidar-service/app/src/main.py
+exec /opt/lidar-service/venv/bin/python \
+  /opt/lidar-service/app/src/main.py \
+  --config /etc/lidar-service/config.yaml

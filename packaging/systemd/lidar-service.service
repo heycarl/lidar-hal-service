@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/opt/lidar-service/venv/bin/python /opt/lidar-service/app/src/main.py
+ExecStart=/opt/lidar-service/bin/lidar-service
 Restart=always
 RestartSec=2
 Environment=PYTHONUNBUFFERED=1

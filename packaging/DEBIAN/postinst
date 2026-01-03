@@ -15,7 +15,7 @@ fi
 if [ ! -d /opt/lidar-service/venv ]; then
   $PYTHON -m venv /opt/lidar-service/venv
   /opt/lidar-service/venv/bin/pip install --upgrade pip
-  /opt/lidar-service/venv/bin/pip install --no-index --find-links=/opt/lidar-service/wheels lidar_service-*.whl
+  /opt/lidar-service/venv/bin/pip install --no-index --find-links=/opt/lidar-service/wheels /opt/lidar-service/wheels/lidar_service-*.whl
 fi
 
 systemctl daemon-reexec
