@@ -84,6 +84,9 @@ jobs:
           sed -i "1s|.*|#!${TARGET}|" venv/bin/python
           sed -i "1s|.*|#!${TARGET}|" venv/bin/pip
           sed -i "1s|.*|#!${TARGET}|" venv/bin/pip3
+          
+          mkdir -p pkg/opt/lidar-service/venv
+          cp -r venv/* pkg/opt/lidar-service/venv/
 
       - name: Build deb package
         run: |
