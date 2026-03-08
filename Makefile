@@ -1,15 +1,16 @@
 .PHONY: help lint format ci deb-layout deb clean wheels
 
 PYTHON ?= python3
+SHELL := /bin/bash
 
 PKG_NAME ?= lidar-service
-VERSION  ?= 0.0.0
+VERSION ?= $(shell date +%Y%m%d)-nightly
 DEB_ARCH ?= arm64
 PYTHON   ?= python3
 
 DESCRIPTION := $(shell grep -Po '^description\s*=\s*"\K[^"]+' pyproject.toml || echo "")
-MAINTAINER  := $(shell grep -Po '^name\s*=\s*"\K[^"]+' pyproject.toml | head -1)
-EMAIL       := $(shell grep -Po '^email\s*=\s*"\K[^"]+' pyproject.toml | head -1)
+MAINTAINER  := $(shell grep -Po '^\s*{name\s*=\s*"\K[^"]+' pyproject.toml | head -n 1)
+EMAIL       := $(shell grep -Po 'email\s*=\s*"\K[^"]+' pyproject.toml | head -n 1)
 MAINTAINER_FULL := $(MAINTAINER) <$(EMAIL)>
 
 help:
